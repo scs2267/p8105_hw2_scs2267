@@ -1,5 +1,5 @@
 ---
-title: "Simple document"
+title: "Homework #2"
 output: github_document
 ---
 ```{r}
@@ -43,14 +43,37 @@ info3_tbl = tibble(
 )
 ```
 
-There are `r nrow(info1_tbl)` distinct stations.There are `r nrow(info2_tbl)` ADA compliant stations. There are `r nrow(info3_tbl)` stations without vending that allow entrance.
+
+## Description
+This data set contains information about the types of subway stations available in New York City, the locations of these stations, the type of entrances, ADA accessibility, and whether or not there is vending. This data set includes `r nrow(info1_tbl)` distinct stations.There are `r nrow(info2_tbl)` ADA compliant stations. There are `r nrow(info3_tbl)` stations without vending that allow entrance. 
+
+```{r}
+transit_2_df = mutate(
+  transit_df,
+  route8 = as.character(route8),
+  route9 = as.character(route9),
+  route10 = as.character(route10),
+  route11 = as.character(route11)
+) %>% 
+  pivot_longer(
+  route1:route11,
+  names_to = "Route Number",
+  values_to = "Route Name"
+)
+
+a_count = distinct(transit_2_df, station_name) %>% 
+  filter("Route Name" == "A")
+  
+```
+
+The number of distinct stations that serve the A train is `r nrow(a_count)`.
 
 
 
 
-Problem #2
+# Problem #2
 
-# Reading and Cleaning the Data
+## Reading and Cleaning the Data
 
 ```{r}
 library(readxl)
@@ -68,7 +91,7 @@ trash_wheel_df = read_excel("./data/trash_wheel_data.xlsx") %>%
 trash_wheel_df
 ```
 
-# Professor Trash Wheel and Gwynnda
+## Professor Trash Wheel and Gwynnda
 
 ```{r}
 Prof_trash_wheel_df = readxl::read_excel("./data/trash_wheel_data.xlsx", sheet = "Professor Trash Wheel",  na = c("NA", ".", "")) %>% 
@@ -97,13 +120,13 @@ cigarette_june = filter(two_trash_wheel, prof_trash == "Gwynnda" & month == "Jun
 ```
 
 
-# Describing the data
+## Describing the data
 
-The total weight of trash collected by professor trash wheel is `r sum(prof_weight$weight_tons, na.rm = TRUE)`. The total number of cigarette butts collected by Gwynnda in June 2022 is `r sum(cigarette_june$cigarette_butts, na.rm = TRUE)`. 
+The data set "two_trash_wheels" contains data on trash collected by type for each dumpster, and states the month and year in which they were collected. The total weight of trash collected by professor trash wheel is `r sum(prof_weight$weight_tons, na.rm = TRUE)`. The total number of cigarette butts collected by Gwynnda in June 2022 is `r sum(cigarette_june$cigarette_butts, na.rm = TRUE)`. 
 
-Problem #3
+# Problem 3
 
-# Reading in the data and cleaning
+## Reading in the data and cleaning
 
 ```{r}
 bakers_df = read_csv("./data/bakers.csv", na = c("NA", ".", ""), show_col_types = FALSE) %>% 
@@ -127,7 +150,7 @@ results_df = read_csv("./data/results.csv", na = c("NA", ".", ""), show_col_type
 ```
 
 
-# Combining and cleaning the data
+## Combining and cleaning the data
 ```{r}
 no_match_df = anti_join(bakers_df, bakes_df, by = NULL, copy = FALSE)
 no_match2_df = anti_join(bakes_df, results_df, by = NULL, copy = FALSE)
@@ -136,23 +159,41 @@ no_match3_df = anti_join(bakers_df, results_df, by = NULL, copy = FALSE)
 ```
 
 ```{r}
-clean_data_1 = left_join(bakers_df, bakes_df, relationship = "many-to-many")
+clean_data_1 = left_join(bakers_df, bakes_df,  relationship = "many-to-many")
 
 clean_data_final = left_join(clean_data_1, results_df) %>% 
   select(-baker) %>% 
   relocate(series, episode)
 ```
 
-## Winner Table
+For this data set, I cleaned the data by converting all of the variable names to snake case. I noticed that, in comparison to the bakes and results data sets, the bakers data set was not in order. I fixed this by arranging the data in order of series, which also placed the bakers in alphabetical order. I also noticed that at the top of the data set for results, the column names were formatted strangely, so I renamed the columns and edited out columns that were blank. I also converted the variables "series", "episode", "baker", "technical", and "results" to integers to run the anti_join functions.
+
+### Winner Table
 
 ```{r}
 winners_df = filter(clean_data_final, results == "WINNER") %>% 
-  select(baker_name, results)
+  select(baker_name, technical, results)
 
 winners_df
 ```
+The winners of the bake-off do not really surprise me, as all of them came within the top three for the technical challenge. 
+
+### Viewers Info
+```{r}
+  viewers_df = read_csv("./data/viewers.csv", na = c("NA", ".", ""), show_col_types = FALSE) %>% 
+  janitor::clean_names()
+
+head(viewers_df, n = 10)
+```
+
+```{r}
+viewership_1 = (sum(viewers_df$series_1, na.rm = TRUE)/nrow(viewers_df))
+
+viewership_5 = (sum(viewers_df$series_5, na.rm = TRUE)/nrow(viewers_df))
+```
 
 
+The average viewership for Season 1 was `r viewership_1`. The average viewership for Season 5 was `r viewership_5`. 
 
 
 
