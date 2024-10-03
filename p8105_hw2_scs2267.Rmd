@@ -1,0 +1,158 @@
+---
+title: "Simple document"
+output: github_document
+---
+```{r}
+library(tidyverse)
+```
+
+# Problem 1
+## Importing and Cleaning Data
+```{r}
+transit_df = read_csv("./data/NYC_Transit.csv") %>% 
+  janitor::clean_names() %>% 
+  select(line:entry, vending, ada) %>% 
+  mutate(
+    entry = as.integer(entry),
+    entry = 
+      case_match(
+        entry,
+        1 ~ "YES", 
+        2 ~ "NO")
+      )
+transit_df
+```
+
+```{r}
+
+info1_tbl = tibble(
+  distinct_stations = distinct(transit_df, station_name)
+)
+
+```
+
+```{r}
+info2_tbl = tibble(
+  compliant = filter(transit_df, ada == TRUE)
+)
+```
+
+```{r}
+info3_tbl = tibble(
+  vendor_entrance = filter(transit_df, vending == "NO" & entry == "YES")
+)
+```
+
+There are `r nrow(info1_tbl)` distinct stations.There are `r nrow(info2_tbl)` ADA compliant stations. There are `r nrow(info3_tbl)` stations without vending that allow entrance.
+
+
+
+
+Problem #2
+
+# Reading and Cleaning the Data
+
+```{r}
+library(readxl)
+```
+
+```{r}
+trash_wheel_df = read_excel("./data/trash_wheel_data.xlsx") %>% 
+  janitor::clean_names() %>% 
+  select (-month, -year, -date, -x15, -x16) %>% 
+  filter(dumpster >= 1) %>% 
+  mutate(
+    sb = as.integer(sports_balls),
+    sports_balls = sb
+  )
+trash_wheel_df
+```
+
+# Professor Trash Wheel and Gwynnda
+
+```{r}
+Prof_trash_wheel_df = readxl::read_excel("./data/trash_wheel_data.xlsx", sheet = "Professor Trash Wheel",  na = c("NA", ".", "")) %>% 
+  janitor::clean_names() %>% 
+  filter(dumpster >= 1) %>% 
+  mutate(
+    prof_trash = "Professor Trash Wheel"
+  )
+
+Gwynnda_df = readxl::read_excel("./data/trash_wheel_data.xlsx", sheet = "Gwynnda Trash Wheel",  na = c("NA", ".", "")) %>% 
+  janitor::clean_names() %>% 
+  filter(dumpster >= 1) %>% 
+  mutate(
+    prof_trash = "Gwynnda"
+  )
+
+two_trash_wheel = 
+  full_join(Prof_trash_wheel_df, Gwynnda_df) %>% 
+  relocate(prof_trash)
+```
+
+```{r}
+prof_weight = filter(two_trash_wheel, prof_trash == "Professor Trash Wheel")
+
+cigarette_june = filter(two_trash_wheel, prof_trash == "Gwynnda" & month == "June" & year == "2022")
+```
+
+
+# Describing the data
+
+The total weight of trash collected by professor trash wheel is `r sum(prof_weight$weight_tons, na.rm = TRUE)`. The total number of cigarette butts collected by Gwynnda in June 2022 is `r sum(cigarette_june$cigarette_butts, na.rm = TRUE)`. 
+
+Problem #3
+
+# Reading in the data and cleaning
+
+```{r}
+bakers_df = read_csv("./data/bakers.csv", na = c("NA", ".", ""), show_col_types = FALSE) %>% 
+  janitor::clean_names() %>% 
+  relocate(series) %>% 
+  arrange(series, .by_group = FALSE)
+
+bakes_df = read_csv("./data/bakes.csv", na = c("NA", ".", ""), show_col_types = FALSE)%>% 
+  janitor::clean_names() 
+
+results_df = read_csv("./data/results.csv", na = c("NA", ".", ""), show_col_types = FALSE)%>% 
+  janitor::clean_names() %>% 
+  rename("series" = x1,"episode" = x2, "baker" = x3, "technical" = x4, "results" = in_stayed_in_out_eliminated_star_baker_star_baker_winner_series_winner_runner_up_series_runner_up_wd_withdrew) %>% 
+  filter(series >= 1 & series != "series") %>% 
+  mutate(
+    series = as.integer(series),
+    episode = as.integer(episode),
+    technical = as.integer(technical)
+  )
+
+```
+
+
+# Combining and cleaning the data
+```{r}
+no_match_df = anti_join(bakers_df, bakes_df, by = NULL, copy = FALSE)
+no_match2_df = anti_join(bakes_df, results_df, by = NULL, copy = FALSE)
+no_match3_df = anti_join(bakers_df, results_df, by = NULL, copy = FALSE)
+
+```
+
+```{r}
+clean_data_1 = left_join(bakers_df, bakes_df, relationship = "many-to-many")
+
+clean_data_final = left_join(clean_data_1, results_df) %>% 
+  select(-baker) %>% 
+  relocate(series, episode)
+```
+
+## Winner Table
+
+```{r}
+winners_df = filter(clean_data_final, results == "WINNER") %>% 
+  select(baker_name, results)
+
+winners_df
+```
+
+
+
+
+
